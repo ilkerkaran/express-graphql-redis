@@ -1,0 +1,19 @@
+{
+  "name": "express-graphql-redis",
+  "version": "1.0.0",
+  "description": "express app serves graphql with redis caching mechanism",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ilkerkaran/express-graphql-redis.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ilkerkaran/express-graphql-redis/issues"
+  },
+  "homepage": "https://github.com/ilkerkaran/express-graphql-redis#readme"
+}
