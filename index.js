@@ -15,11 +15,10 @@ const server = new ApolloServer({
 });
 
 app.use('/graphql', async (req, res, next) => {
-  const requestBodyHash = helper.getHash(req.query);
+  const nonHashedKey = JSON.stringify(req.body);
+  const requestBodyHash = helper.getHash(JSON.stringify(nonHashedKey));
   const cachedData = await redis.get(requestBodyHash);
-  console.log('cachedData', cachedData);
   if (cachedData) return res.send(JSON.parse(cachedData));
-  console.log('next call');
   next();
 
   var oldWrite = res.write,
@@ -38,7 +37,6 @@ app.use('/graphql', async (req, res, next) => {
 
     var body = Buffer.concat(chunks).toString('utf8');
     redis.set(requestBodyHash, body);
-    console.log('resbody', req.path, body);
 
     oldEnd.apply(res, arguments);
   };

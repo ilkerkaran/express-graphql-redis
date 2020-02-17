@@ -10,11 +10,11 @@ client.on('error', function(err) {
 });
 
 const set = (key, value) => {
-  value.cached = true;
   client.set(key, value);
 };
 
 const get = key => {
+  console.log('get key', key);
   client.get(key, function(error, result) {
     if (error) {
       console.log(error);
