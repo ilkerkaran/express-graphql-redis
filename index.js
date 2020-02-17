@@ -1,13 +1,47 @@
 const express = require('express');
+const redis = require('./helpers/redisManager');
+const helper = require('./helpers/core');
 // const { ApolloServer, gql } = require('apollo-server-express');
 const { ApolloServer } = require('apollo-server-express');
+const bodyParser = require('body-parser');
 const schema = require('./graphql/schema');
 const resolvers = require('./graphql/resolvers/resolvers.js');
 
 const app = express();
+app.use(bodyParser.json());
 const server = new ApolloServer({
   typeDefs: schema,
   resolvers
+});
+
+app.use('/graphql', async (req, res, next) => {
+  const requestBodyHash = helper.getHash(req.query);
+  const cachedData = await redis.get(requestBodyHash);
+  console.log('cachedData', cachedData);
+  if (cachedData) return res.send(JSON.parse(cachedData));
+  console.log('next call');
+  next();
+
+  var oldWrite = res.write,
+    oldEnd = res.end;
+
+  var chunks = [];
+
+  res.write = function(chunk) {
+    chunks.push(new Buffer(chunk));
+
+    oldWrite.apply(res, arguments);
+  };
+
+  res.end = function(chunk) {
+    if (chunk) chunks.push(new Buffer(chunk));
+
+    var body = Buffer.concat(chunks).toString('utf8');
+    redis.set(requestBodyHash, body);
+    console.log('resbody', req.path, body);
+
+    oldEnd.apply(res, arguments);
+  };
 });
 
 server.applyMiddleware({ app, path: '/graphql' });
