@@ -11,36 +11,41 @@ const app = express();
 app.use(bodyParser.json());
 const server = new ApolloServer({
   typeDefs: schema,
-  resolvers
+  resolvers,
+  context: ({ req, res }) => ({
+    req,
+    res,
+    redis
+  })
 });
 
-app.use('/graphql', async (req, res, next) => {
-  const nonHashedKey = JSON.stringify(req.body);
-  const requestBodyHash = helper.getHash(JSON.stringify(nonHashedKey));
-  const cachedData = await redis.get(requestBodyHash);
-  if (cachedData) return res.send(JSON.parse(cachedData));
-  next();
+// app.use('/graphql', async (req, res, next) => {
+//   const nonHashedKey = JSON.stringify(req.body);
+//   const requestBodyHash = helper.getHash(JSON.stringify(nonHashedKey));
+//   const cachedData = await redis.get(requestBodyHash);
+//   if (cachedData) return res.send(JSON.parse(cachedData));
+//   next();
 
-  var oldWrite = res.write,
-    oldEnd = res.end;
+//   var oldWrite = res.write,
+//     oldEnd = res.end;
 
-  var chunks = [];
+//   var chunks = [];
 
-  res.write = function(chunk) {
-    chunks.push(new Buffer(chunk));
+//   res.write = function(chunk) {
+//     chunks.push(new Buffer(chunk));
 
-    oldWrite.apply(res, arguments);
-  };
+//     oldWrite.apply(res, arguments);
+//   };
 
-  res.end = function(chunk) {
-    if (chunk) chunks.push(new Buffer(chunk));
+//   res.end = function(chunk) {
+//     if (chunk) chunks.push(new Buffer(chunk));
 
-    var body = Buffer.concat(chunks).toString('utf8');
-    redis.set(requestBodyHash, body);
+//     var body = Buffer.concat(chunks).toString('utf8');
+//     redis.set(requestBodyHash, body);
 
-    oldEnd.apply(res, arguments);
-  };
-});
+//     oldEnd.apply(res, arguments);
+//   };
+// });
 
 server.applyMiddleware({ app, path: '/graphql' });
 app.listen({ port: 8000 }, () => {

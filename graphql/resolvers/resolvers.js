@@ -13,10 +13,12 @@ module.exports = {
       };
     },
     books: () => books,
-    book: (parent, args) => {
-      const res = books.find(b => b.id === +args.id);
-      console.log(args);
-      return res;
+    book: async (parent, args, context) => {
+      return await getOrAdd('myKey1', () => {
+        //Fetch daata database
+        const res = books.find(b => b.id === +args.id);
+        return res;
+      });
     }
   }
 };

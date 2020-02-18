@@ -1,5 +1,9 @@
 const redis = require('redis');
+const { Promise } = require('bluebird');
 
+Promise.promisifyAll(redis.RedisClient.prototype);
+
+const { promisify } = require('util');
 const client = redis.createClient();
 client.on('connect', function() {
   console.log('Redis client connected');
@@ -10,29 +14,28 @@ client.on('error', function(err) {
 });
 
 const set = (key, value) => {
-  client.set(key, value);
+  client.set(key, value, redis.print);
 };
+
+const getAsync = promisify(client.get).bind(client);
 
 const get = key => {
   console.log('get key', key);
-  client.get(key, function(error, result) {
-    if (error) {
-      console.log(error);
-      throw error;
-    }
-    console.log('GET result ->' + result);
-    return result;
-  });
+  return getAsync(key);
 };
 
-getOrAdd = (key, callback) => {
-  let res = get(key);
-  if (!res) {
-    const res = callback();
-    res.cached = true;
-    set(key, persistedResult);
+getOrAdd = async (key, getFromDb) => {
+  let resStr = await get(key);
+  let resObj;
+  if (resStr) {
+    resObj = JSON.parse(resStr);
+    return resObj;
+  } else {
+    resObj = getFromDb();
+    resStr = JSON.stringify(resObj);
+    set(key, resStr);
   }
-  return res;
+  return resObj;
 };
 
 module.exports = { instance: client, set, get };
