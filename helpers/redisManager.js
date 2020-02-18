@@ -32,8 +32,10 @@ getOrAdd = async (key, getFromDb) => {
     return resObj;
   } else {
     resObj = getFromDb();
-    resStr = JSON.stringify(resObj);
-    set(key, resStr);
+    if (resObj) {
+      resStr = JSON.stringify(resObj);
+      set(key, resStr);
+    }
   }
   return resObj;
 };

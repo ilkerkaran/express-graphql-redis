@@ -1,21 +1,18 @@
 const books = require('../../data/books.json');
+const helpers = require('../../helpers/core');
 module.exports = {
   Query: {
-    me: () => {
-      return {
-        username: 'Robin Wieruch'
-      };
-    },
-    user: (parent, args) => {
-      console.log(parent, args);
-      return {
-        username: 'Dave Davids'
-      };
-    },
     books: () => books,
     book: async (parent, args, context) => {
-      return await getOrAdd('myKey1', () => {
+      const combinedArgs = { parent, args, body: context.body };
+      const argsStr = JSON.stringify(combinedArgs);
+      const objHash = helpers.getHash(argsStr);
+      const cacheKey = `${context.req.sessionID}:book:${helpers.getHash(
+        JSON.stringify(combinedArgs)
+      )}`;
+      return await getOrAdd(cacheKey, () => {
         //Fetch daata database
+        console.log('fetched from db');
         const res = books.find(b => b.id === +args.id);
         return res;
       });
